@@ -99,15 +99,14 @@ public class scareware {
 public static void playWarningSound(String fileName) {
     new Thread(() -> {
         try {
-            // Thử tìm ở gốc (root) của ClassLoader
+
             InputStream audioSrc = scareware.class.getResourceAsStream("/" + fileName);
             
-            // Nếu không thấy, thử tìm bên trong folder src (theo package của mày)
             if (audioSrc == null) {
                 audioSrc = scareware.class.getResourceAsStream("/src/" + fileName);
             }
             
-            // Nếu vẫn không thấy, thử tìm trực tiếp trong cùng folder với class
+
             if (audioSrc == null) {
                 audioSrc = scareware.class.getResourceAsStream(fileName);
             }
